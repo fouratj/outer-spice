@@ -1,0 +1,41 @@
+"# Solar System Explorer PRD
+
+## Overview
+A simple HTML5 web app for exploring the solar system in 3D with full 6 degrees of freedom (6DoF) controls. Users can navigate freely, travel to any planet at variable speeds via intuitive buttons, and switch between realistic (accurate scales, textures, orbits) and artistic (stylized, enhanced visuals) modes. The app should be lightweight, run in any modern browser, and provide an immersive, educational experience.
+
+## Target Audience
+- General users interested in space exploration (e.g., students, enthusiasts).
+- Runs on desktop/mobile browsers with WebGL support.
+
+## Key Features
+1. **3D Solar System Model**:
+   - Include the Sun, 8 planets (Mercury to Neptune), and major moons (e.g., Earth's Moon, Jupiter's Galilean moons).
+   - Realistic mode: Accurate relative scales, distances, orbits, and textures (use public domain NASA imagery).
+   - Artistic mode: Stylized visuals (e.g., vibrant colors, particle effects for atmospheres, simplified scales for better navigation).
+
+2. **Navigation and Controls**:
+   - 6DoF controls: WASD for movement, mouse/trackpad for rotation/pitch/yaw (like flight simulators). Support keyboard + mouse or touch controls for mobile.
+   - Planet selection buttons: Sidebar with buttons for each planet/major body. Clicking instantly travels to it at user-selected speed (slider for speed control: slow for immersion, fast for quick jumps).
+   - Free-fly mode: Users can manually fly anywhere at any speed.
+   - Intuitive UI: On-screen hints for controls, zoom in/out, mode toggle button.
+
+3. **Modes**:
+   - Toggle between realistic and artistic views.
+   - Realistic: Physically accurate lighting, shadows, rotations.
+   - Artistic: Enhanced effects (e.g., glowing auras, trails for orbits).
+
+4. **Technical Requirements**:
+   - Built with HTML5, JavaScript, and Three.js for 3D rendering (no heavy frameworks like React unless necessary for simplicity).
+   - Responsive design for desktop and mobile.
+   - Offline-capable (no server dependencies).
+   - Beautiful, modern UI with best UX practices (e.g., smooth animations, accessibility).
+
+5. **Non-Functional Requirements**:
+   - Performance: Smooth 60FPS on mid-range devices.
+   - Simplicity: Minimal dependencies; easy to run locally.
+   - Extensibility: Code structured for easy addition of more celestial bodies.
+
+## Success Criteria
+- App loads in browser and renders interactive 3D solar system.
+- Users can navigate freely and switch modes without issues.
+- All features work as described with intuitive controls." 

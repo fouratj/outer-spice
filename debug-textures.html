@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Texture Debug</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+        }
+        #container {
+            width: 100%;
+            height: 400px;
+            border: 1px solid #333;
+        }
+        .texture-test {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #333;
+        }
+        .texture-preview {
+            width: 200px;
+            height: 100px;
+            border: 1px solid #666;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Texture Loading Debug</h1>
+    <div id="container"></div>
+    <div id="texture-tests"></div>
+
+    <script type="module">
+        import * as THREE from 'three';
+
+        // Test texture loading
+        const textureTests = [
+            { name: 'Earth', path: '/assets/textures/earth_diffuse.jpg' },
+            { name: 'Mars', path: '/assets/textures/mars_diffuse.jpg' },
+            { name: 'Jupiter', path: '/assets/textures/jupiter_diffuse.jpg' },
+            { name: 'Sun', path: '/assets/textures/sun_diffuse.jpg' }
+        ];
+
+        const testsContainer = document.getElementById('texture-tests');
+
+        // Create Three.js scene for testing
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, 800/400, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(800, 400);
+        document.getElementById('container').appendChild(renderer.domElement);
+
+        camera.position.z = 5;
+
+        // Test each texture
+        for (let i = 0; i < textureTests.length; i++) {
+            const test = textureTests[i];
+            const testDiv = document.createElement('div');
+            testDiv.className = 'texture-test';
+            testDiv.innerHTML = `<h3>${test.name}</h3><div>Path: ${test.path}</div><div id="status-${i}">Loading...</div>`;
+            testsContainer.appendChild(testDiv);
+
+            // Test texture loading
+            const loader = new THREE.TextureLoader();
+            loader.load(
+                test.path,
+                (texture) => {
+                    console.log(`✅ Successfully loaded ${test.name}:`, texture);
+                    document.getElementById(`status-${i}`).innerHTML = `✅ Loaded (${texture.image.width}x${texture.image.height})`;
+                    
+                    // Create a sphere with this texture
+                    const geometry = new THREE.SphereGeometry(1, 32, 32);
+                    const material = new THREE.MeshBasicMaterial({ map: texture });
+                    const sphere = new THREE.Mesh(geometry, material);
+                    sphere.position.x = (i - textureTests.length/2) * 2.5;
+                    scene.add(sphere);
+                },
+                (progress) => {
+                    console.log(`Loading ${test.name}:`, progress);
+                },
+                (error) => {
+                    console.error(`❌ Failed to load ${test.name}:`, error);
+                    document.getElementById(`status-${i}`).innerHTML = `❌ Failed: ${error.message}`;
+                }
+            );
+        }
+
+        // Add lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(1, 1, 1);
+        scene.add(directionalLight);
+
+        // Render loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Rotate spheres
+            scene.children.forEach((child) => {
+                if (child.type === 'Mesh') {
+                    child.rotation.y += 0.01;
+                }
+            });
+            
+            renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+</body>
+</html>

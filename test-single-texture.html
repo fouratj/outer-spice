@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Single Texture Test</title>
+    <style>
+        body { margin: 0; background: #000; color: #fff; font-family: Arial; }
+        #info { position: absolute; top: 10px; left: 10px; z-index: 100; }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <h3>Earth Texture Test</h3>
+        <div id="status">Loading...</div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+
+        // Create scene
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Create sphere geometry
+        const geometry = new THREE.SphereGeometry(2, 64, 64);
+        
+        // Load texture
+        const loader = new THREE.TextureLoader();
+        const statusDiv = document.getElementById('status');
+        
+        console.log('🔄 Loading Earth texture...');
+        statusDiv.textContent = 'Loading Earth texture...';
+        
+        loader.load(
+            '/assets/textures/earth_diffuse.jpg',
+            (texture) => {
+                console.log('✅ Earth texture loaded successfully:', texture);
+                statusDiv.textContent = `✅ Loaded: ${texture.image.width}x${texture.image.height}`;
+                
+                // Create material with texture
+                const material = new THREE.MeshPhongMaterial({
+                    map: texture,
+                    color: 0xffffff
+                });
+                
+                // Create mesh
+                const earth = new THREE.Mesh(geometry, material);
+                scene.add(earth);
+                
+                console.log('🌍 Earth mesh created and added to scene');
+            },
+            (progress) => {
+                console.log('Loading progress:', progress);
+            },
+            (error) => {
+                console.error('❌ Failed to load Earth texture:', error);
+                statusDiv.textContent = `❌ Failed: ${error.message}`;
+                
+                // Create fallback material
+                const material = new THREE.MeshPhongMaterial({
+                    color: 0x6b93d6
+                });
+                const earth = new THREE.Mesh(geometry, material);
+                scene.add(earth);
+            }
+        );
+
+        // Add lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(5, 5, 5);
+        scene.add(directionalLight);
+
+        // Position camera
+        camera.position.z = 5;
+
+        // Render loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Rotate Earth
+            scene.children.forEach(child => {
+                if (child.type === 'Mesh') {
+                    child.rotation.y += 0.005;
+                }
+            });
+            
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,154 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Project Setup and Boilerplate",
+        "description": "Set up the basic project structure with HTML5, CSS, and JavaScript. Configure the development environment and create the initial boilerplate code.",
+        "details": "Create a project with the following structure:\n- index.html (main entry point)\n- css/styles.css (responsive styling)\n- js/main.js (application entry point)\n- js/controls.js (navigation controls)\n- js/models/ (for celestial body models)\n- assets/ (for textures and other resources)\n\nUse Vite (v4.4+) as a lightweight build tool for better development experience. Set up ESLint (v8.45+) for code quality and Prettier (v3.0+) for formatting. Initialize a package.json with minimal dependencies:\n- three.js (v0.155.0 or latest)\n- stats.js for performance monitoring\n\nCreate a responsive HTML5 template with proper viewport settings for mobile compatibility. Set up a basic CSS reset and responsive grid system. Implement a service worker for offline capability.",
+        "testStrategy": "Verify project structure is correctly set up. Test that the development server runs without errors. Ensure the page loads in multiple browsers (Chrome, Firefox, Safari) and is responsive on different screen sizes. Validate HTML5 compliance using W3C validator.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 2,
+        "title": "Three.js Scene Initialization",
+        "description": "Set up the Three.js environment with a scene, camera, renderer, and lighting system to serve as the foundation for the 3D solar system.",
+        "details": "Initialize Three.js (v0.155.0+) with the following components:\n- Create a WebGLRenderer with antialias enabled and configure for device pixel ratio\n- Set up a PerspectiveCamera with appropriate FOV (60-75 degrees), aspect ratio, and near/far planes\n- Initialize a Scene object with a starfield background (use a CubeTextureLoader with space textures)\n- Add ambient light (AmbientLight) and directional light (DirectionalLight) to simulate sunlight\n- Implement a resize handler to maintain proper aspect ratio on window resize\n- Set up OrbitControls as a fallback/alternative control system\n- Implement a render loop using requestAnimationFrame for smooth animation\n- Add Stats.js for performance monitoring during development\n\nOptimize renderer settings based on device capabilities using WebGL detection. Use THREE.WebGLRenderer.capabilities to adjust quality settings dynamically.",
+        "testStrategy": "Test scene initialization on multiple devices and browsers. Verify the scene renders at 60FPS on mid-range devices using Stats.js. Check that the renderer properly adjusts to different screen sizes and orientations. Ensure lighting creates appropriate shadows and illumination.",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 3,
+        "title": "Celestial Body Models and Textures",
+        "description": "Create 3D models for all celestial bodies (Sun, planets, major moons) with accurate textures from NASA public domain imagery.",
+        "details": "Implement a CelestialBody class that handles the creation and properties of all solar system objects:\n\n```javascript\nclass CelestialBody {\n  constructor(name, radius, textureMap, bumpMap = null, specularMap = null, options = {}) {\n    this.name = name;\n    this.radius = radius;\n    // Create geometry and material\n    // Handle realistic vs artistic modes\n  }\n  \n  update(time, mode) {\n    // Handle rotation and orbit updates\n  }\n}\n```\n\nFor each planet:\n1. Use SphereGeometry with appropriate segments (higher for closer views)\n2. Create MeshPhongMaterial or MeshStandardMaterial with NASA textures\n3. Add bump maps and specular maps where available for enhanced realism\n4. Store accurate data for:\n   - Size (relative scale)\n   - Rotation period\n   - Orbit parameters\n   - Distinctive features (rings for Saturn, etc.)\n\nTexture sources:\n- NASA's Visible Earth (https://visibleearth.nasa.gov/)\n- Solar System Scope (https://www.solarsystemscope.com/textures/)\n- NASA JPL (https://photojournal.jpl.nasa.gov/)\n\nImplement texture loading with THREE.TextureLoader and add loading progress indicators. Use THREE.LoadingManager to handle all texture loading operations efficiently.",
+        "testStrategy": "Verify all celestial bodies render correctly with proper textures. Test texture loading performance and memory usage. Ensure models appear correctly in both realistic and artistic modes. Validate scientific accuracy of planet properties against NASA data.",
+        "priority": "high",
+        "dependencies": [
+          2
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 4,
+        "title": "Orbital Mechanics and Animation System",
+        "description": "Implement accurate orbital mechanics for planets and moons, including proper rotation, revolution, and relative positioning based on astronomical data.",
+        "details": "Create an OrbitalSystem class to manage the positions and movements of all celestial bodies:\n\n```javascript\nclass OrbitalSystem {\n  constructor() {\n    this.bodies = new Map();\n    this.time = 0;\n    this.timeScale = 1; // Speed multiplier\n    this.mode = 'realistic'; // or 'artistic'\n  }\n  \n  addBody(body, parent = null) {\n    // Add body to the system with optional parent (for moons)\n  }\n  \n  update(deltaTime) {\n    // Update positions of all bodies based on orbital parameters\n    // Apply Kepler's laws for elliptical orbits in realistic mode\n    // Use simplified circular orbits in artistic mode\n  }\n}\n```\n\nImplement accurate orbital parameters using data from NASA or similar sources:\n- Semi-major axis\n- Eccentricity\n- Inclination\n- Orbital period\n\nUse Kepler's equations to calculate positions. For artistic mode, implement simplified orbits with enhanced visual effects. Add a time control system to speed up or slow down the simulation (1 second real time = X days in simulation). Implement a system to smoothly transition between different time scales.",
+        "testStrategy": "Verify orbital paths match known astronomical data in realistic mode. Test time scaling functionality at various speeds. Ensure smooth transitions between time scales. Check that all bodies maintain proper relative positions during animation.",
+        "priority": "medium",
+        "dependencies": [
+          3
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 5,
+        "title": "6DoF Navigation Controls",
+        "description": "Implement full 6 degrees of freedom (6DoF) controls for navigating the solar system, supporting both keyboard/mouse and touch interfaces.",
+        "details": "Create a NavigationControls class that handles all user input for 6DoF movement:\n\n```javascript\nclass NavigationControls {\n  constructor(camera, domElement) {\n    this.camera = camera;\n    this.domElement = domElement;\n    this.moveSpeed = 0.1;\n    this.rotationSpeed = 0.002;\n    // Initialize control state\n  }\n  \n  setupKeyboardControls() {\n    // WASD for movement, arrow keys for rotation\n  }\n  \n  setupMouseControls() {\n    // Mouse drag for rotation, scroll for zoom\n  }\n  \n  setupTouchControls() {\n    // Single finger drag for rotation\n    // Two finger pinch for zoom\n    // Two finger drag for panning\n  }\n  \n  update(deltaTime) {\n    // Apply movement and rotation based on current control state\n  }\n}\n```\n\nImplement the following control schemes:\n1. Keyboard: WASD for forward/backward/strafe, QE for up/down, arrow keys for rotation\n2. Mouse: Click and drag for rotation, scroll wheel for speed adjustment\n3. Touch: Single finger drag for rotation, two-finger pinch for zoom, two-finger drag for movement\n\nAdd inertia for smooth movement and deceleration. Implement collision detection to prevent passing through planets. Add visual indicators for movement direction and speed. Use Pointer Lock API for immersive mouse control in desktop mode.",
+        "testStrategy": "Test controls on multiple devices (desktop, tablet, mobile). Verify smooth movement and rotation in all directions. Ensure controls are intuitive and responsive. Test edge cases like rapid direction changes and extreme speeds. Validate accessibility for keyboard-only navigation.",
+        "priority": "high",
+        "dependencies": [
+          2
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 6,
+        "title": "Planet Selection and Travel System",
+        "description": "Create a UI system for selecting planets and automatically traveling to them at variable speeds, with smooth camera transitions.",
+        "details": "Implement a PlanetSelector class that manages planet selection and camera transitions:\n\n```javascript\nclass PlanetSelector {\n  constructor(camera, orbitalSystem) {\n    this.camera = camera;\n    this.orbitalSystem = orbitalSystem;\n    this.selectedBody = null;\n    this.transitioning = false;\n    this.transitionSpeed = 1.0; // Adjustable\n  }\n  \n  selectBody(bodyName) {\n    // Find body in the orbital system\n    // Start transition to selected body\n  }\n  \n  updateTransition(deltaTime) {\n    // Handle smooth camera movement to target\n  }\n  \n  setTransitionSpeed(speed) {\n    // Adjust transition speed (0.1 to 10.0)\n  }\n}\n```\n\nCreate a sidebar UI with:\n- Buttons for each celestial body with name and thumbnail\n- Speed slider for transition speed control (0.1x to 10x)\n- Current selection indicator\n- Distance/ETA indicator during transition\n\nImplement smooth camera transitions using THREE.js animation system or GSAP library (v3.12+) for more advanced easing functions. Add a cancel button to stop transitions in progress. Implement a \"Look At\" feature to automatically orient the camera toward the selected body. Add visual effects during high-speed travel (e.g., motion blur, star streaks).",
+        "testStrategy": "Test selection of all celestial bodies. Verify smooth transitions at various speeds. Ensure camera properly orients to face selected bodies. Test cancellation of transitions. Validate UI responsiveness on different screen sizes.",
+        "priority": "medium",
+        "dependencies": [
+          4,
+          5
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 7,
+        "title": "Realistic and Artistic Mode Toggle",
+        "description": "Implement the ability to switch between realistic and artistic visualization modes with appropriate visual effects and transitions.",
+        "details": "Create a VisualizationMode class to manage the two display modes:\n\n```javascript\nclass VisualizationMode {\n  constructor(scene, orbitalSystem) {\n    this.scene = scene;\n    this.orbitalSystem = orbitalSystem;\n    this.currentMode = 'realistic'; // or 'artistic'\n    this.effects = {\n      realistic: [],\n      artistic: []\n    };\n  }\n  \n  toggleMode() {\n    // Switch between realistic and artistic modes\n    // Apply appropriate visual effects\n  }\n  \n  setupRealisticMode() {\n    // Configure accurate scales, lighting, and physics\n  }\n  \n  setupArtisticMode() {\n    // Configure enhanced visuals, effects, and simplified physics\n  }\n}\n```\n\nFor realistic mode:\n- Accurate planet sizes and distances (use astronomical units)\n- Physically-based rendering with correct lighting and shadows\n- Accurate orbital mechanics and rotation periods\n- Realistic textures from NASA imagery\n\nFor artistic mode:\n- Enhanced planet sizes for better visibility (maintain relative proportions)\n- Stylized materials with emissive components for glow effects\n- Particle effects for atmospheres and planetary features\n- Visible orbit paths with glowing trails\n- Enhanced lighting with bloom and god rays (using THREE.UnrealBloomPass)\n\nImplement smooth transitions between modes using TWEEN.js or GSAP for property animations. Add a toggle button in the UI with clear visual indication of current mode.",
+        "testStrategy": "Test mode switching for all celestial bodies. Verify visual effects appear correctly in each mode. Ensure smooth transitions between modes. Validate performance remains at 60FPS in both modes on target devices. Test that orbital mechanics and physics remain accurate in realistic mode.",
+        "priority": "medium",
+        "dependencies": [
+          3,
+          4
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 8,
+        "title": "User Interface and Controls Overlay",
+        "description": "Design and implement a responsive, intuitive user interface with control overlays, information panels, and navigation aids.",
+        "details": "Create a modular UI system using HTML/CSS for overlays and controls:\n\n```javascript\nclass UserInterface {\n  constructor(container, planetSelector, visualizationMode, navigationControls) {\n    this.container = container;\n    this.planetSelector = planetSelector;\n    this.visualizationMode = visualizationMode;\n    this.navigationControls = navigationControls;\n    \n    // Initialize UI components\n    this.setupControlPanel();\n    this.setupInfoPanel();\n    this.setupNavigationAids();\n    this.setupMobileAdaptation();\n  }\n  \n  // UI component methods...\n}\n```\n\nImplement the following UI components:\n1. Control Panel:\n   - Planet selection sidebar with thumbnails and names\n   - Mode toggle switch (realistic/artistic)\n   - Speed control slider\n   - Help button for controls explanation\n\n2. Information Panel:\n   - Current planet name and basic facts\n   - Distance from sun/earth\n   - Real-time information updates\n\n3. Navigation Aids:\n   - On-screen controls for mobile (direction pad, rotation controls)\n   - Minimap showing current position in solar system\n   - Orientation indicator (compass-like)\n\n4. Accessibility Features:\n   - High contrast mode\n   - Keyboard shortcuts with on-screen display\n   - Screen reader compatibility\n\nUse CSS Grid and Flexbox for responsive layouts. Implement collapsible panels for mobile screens. Add smooth transitions and animations for UI elements using CSS transitions. Use SVG icons for better scaling and clarity.",
+        "testStrategy": "Test UI on multiple screen sizes and orientations. Verify all controls function correctly. Ensure information updates in real-time. Test accessibility features with screen readers. Validate touch controls on mobile devices. Check that UI elements don't obstruct the main view unnecessarily.",
+        "priority": "medium",
+        "dependencies": [
+          5,
+          6,
+          7
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 9,
+        "title": "Performance Optimization and Mobile Compatibility",
+        "description": "Optimize the application for performance across devices, ensuring smooth 60FPS operation and responsive design for mobile browsers.",
+        "details": "Implement a comprehensive performance optimization strategy:\n\n1. Level of Detail (LOD) system:\n```javascript\nclass LODManager {\n  constructor(camera, objects) {\n    this.camera = camera;\n    this.objects = objects;\n    this.distanceThresholds = [10, 50, 100]; // Distance thresholds for detail levels\n  }\n  \n  update() {\n    // Adjust geometry detail based on distance from camera\n  }\n}\n```\n\n2. Implement the following optimizations:\n   - Use THREE.BufferGeometry for all models\n   - Implement geometry instancing for similar objects (e.g., stars, asteroids)\n   - Texture atlas for smaller objects to reduce draw calls\n   - Implement frustum culling to skip rendering objects outside view\n   - Use lower resolution textures for distant objects\n   - Implement shader LOD (simpler shaders for distant objects)\n\n3. Mobile-specific optimizations:\n   - Detect device capabilities using feature detection\n   - Adjust render resolution based on device performance\n   - Simplify effects on lower-end devices\n   - Use compressed textures (WebGL compression extensions)\n   - Implement touch-friendly controls with appropriate sensitivity\n\n4. Memory management:\n   - Implement texture/geometry disposal when not needed\n   - Use object pooling for particle effects\n   - Monitor and manage memory usage with performance.memory API\n\nUse Chrome DevTools Performance panel and Three.js Inspector for profiling and optimization.",
+        "testStrategy": "Benchmark performance on various devices (high-end desktop, mid-range laptop, tablets, smartphones). Verify 60FPS is maintained during normal operation. Test memory usage over extended periods. Validate that LOD system properly adjusts detail levels. Ensure mobile experience is smooth and responsive. Use Lighthouse for performance scoring.",
+        "priority": "high",
+        "dependencies": [
+          2,
+          3,
+          5,
+          7
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 10,
+        "title": "Final Integration and Offline Capability",
+        "description": "Integrate all components into a cohesive application, implement offline capability, and perform final testing and optimization.",
+        "details": "1. Final Integration:\n   - Connect all modules and ensure proper communication\n   - Implement proper initialization sequence\n   - Add loading screen with progress indicators\n   - Create comprehensive error handling system\n\n2. Offline Capability:\n```javascript\n// Register service worker in main.js\nif ('serviceWorker' in navigator) {\n  window.addEventListener('load', () => {\n    navigator.serviceWorker.register('/sw.js')\n      .then(registration => {\n        console.log('ServiceWorker registered');\n      })\n      .catch(error => {\n        console.log('ServiceWorker registration failed:', error);\n      });\n  });\n}\n```\n\n3. Create service worker (sw.js):\n   - Cache all essential assets (HTML, CSS, JS, textures)\n   - Implement cache-first strategy for assets\n   - Add offline fallback page\n   - Handle updates and cache management\n\n4. Final optimizations:\n   - Bundle and minify all JavaScript using Vite\n   - Optimize and compress textures\n   - Implement lazy loading for non-essential assets\n   - Add analytics for usage tracking (optional, privacy-focused)\n\n5. Documentation:\n   - Add inline code documentation\n   - Create README with setup instructions\n   - Document keyboard shortcuts and controls\n\nImplement a manifest.json file for PWA capabilities. Add appropriate meta tags for social sharing and SEO.",
+        "testStrategy": "Perform end-to-end testing of the complete application. Verify offline functionality by disabling network connection. Test installation as PWA on mobile devices. Conduct cross-browser testing (Chrome, Firefox, Safari, Edge). Validate performance meets 60FPS target. Perform user acceptance testing with sample users from target audience. Verify all features from the PRD are implemented correctly.",
+        "priority": "high",
+        "dependencies": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ],
+        "status": "pending",
+        "subtasks": []
+      }
+    ],
+    "metadata": {
+      "created": "2025-07-14T00:07:57.380Z",
+      "updated": "2025-07-14T00:09:32.674Z",
+      "description": "Tasks for master context"
+    }
+  }
+}

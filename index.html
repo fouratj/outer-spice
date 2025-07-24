@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="description" content="Interactive 3D Solar System Explorer with realistic physics and stunning visuals">
+    <meta name="keywords" content="solar system, 3D, space, astronomy, planets, interactive">
+    <meta name="author" content="Solar System Explorer">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Solar System Explorer">
+    <meta property="og:description" content="Explore our solar system in stunning 3D with realistic physics and controls">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="Solar System Explorer">
+    <meta property="twitter:description" content="Explore our solar system in stunning 3D with realistic physics and controls">
+
+    <title>Solar System Explorer</title>
+
+    <!-- Preload critical resources -->
+    <link rel="preload" href="/src/css/main.css" as="style">
+    <link rel="preload" href="/src/main.js" as="script">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" href="/favicon.png">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="/src/css/main.css">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <h2>Loading Solar System...</h2>
+            <div class="loading-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <span class="progress-text" id="progress-text">0%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application Container -->
+    <div id="app">
+        <!-- 3D Scene Container -->
+        <div id="scene-container"></div>
+
+        <!-- User Interface Overlay -->
+        <div id="ui-overlay">
+            <!-- Control Panel -->
+            <div id="control-panel" class="ui-panel">
+                <h3>Controls</h3>
+
+                <!-- Mode Toggle -->
+                <div class="control-group">
+                    <label>Visualization Mode</label>
+                    <button id="mode-toggle" class="mode-button realistic">
+                        <span class="mode-icon">🔬</span>
+                        <span class="mode-text">Realistic</span>
+                    </button>
+                </div>
+
+                <!-- Speed Control -->
+                <div class="control-group">
+                    <label for="speed-slider">Travel Speed: <span id="speed-value">1.0x</span></label>
+                    <input type="range" id="speed-slider" min="0.1" max="10" step="0.1" value="1" class="slider">
+                </div>
+
+                <!-- Planet Selection -->
+                <div class="control-group">
+                    <label>Navigate to Planet</label>
+                    <div id="planet-buttons" class="planet-grid">
+                        <button data-planet="sun" class="planet-button sun">☀️ Sun</button>
+                        <button data-planet="mercury" class="planet-button mercury">☿ Mercury</button>
+                        <button data-planet="venus" class="planet-button venus">♀ Venus</button>
+                        <button data-planet="earth" class="planet-button earth">🌍 Earth</button>
+                        <button data-planet="mars" class="planet-button mars">♂ Mars</button>
+                        <button data-planet="jupiter" class="planet-button jupiter">♃ Jupiter</button>
+                        <button data-planet="saturn" class="planet-button saturn">♄ Saturn</button>
+                        <button data-planet="uranus" class="planet-button uranus">♅ Uranus</button>
+                        <button data-planet="neptune" class="planet-button neptune">♆ Neptune</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Information Panel -->
+            <div id="info-panel" class="ui-panel">
+                <h3 id="current-target">Free Exploration</h3>
+                <div id="target-info">
+                    <p>Use WASD to move, QE for up/down, mouse to look around</p>
+                </div>
+            </div>
+
+            <!-- Help Panel -->
+            <div id="help-panel" class="ui-panel collapsed">
+                <button id="help-toggle" class="help-button">?</button>
+                <div class="help-content">
+                    <h3>Controls</h3>
+                    <div class="control-list">
+                        <div class="control-item">
+                            <kbd>W A S D</kbd>
+                            <span>Move forward, left, back, right</span>
+                        </div>
+                        <div class="control-item">
+                            <kbd>Q E</kbd>
+                            <span>Move up, down</span>
+                        </div>
+                        <div class="control-item">
+                            <kbd>Mouse</kbd>
+                            <span>Look around (click to lock cursor)</span>
+                        </div>
+                        <div class="control-item">
+                            <kbd>ESC</kbd>
+                            <span>Release cursor lock</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Stats (Development) -->
+        <div id="stats-container"></div>
+    </div>
+
+    <!-- Error Fallback -->
+    <div id="error-screen" class="hidden">
+        <div class="error-content">
+            <h2>⚠️ WebGL Not Supported</h2>
+            <p>Your browser doesn't support WebGL, which is required for this application.</p>
+            <p>Please try using a modern browser like Chrome, Firefox, or Safari.</p>
+        </div>
+    </div>
+
+    <!-- Main Application Script -->
+    <script type="module" src="/src/main.js"></script>
+</body>
+</html>
