@@ -249,6 +249,10 @@ button:active {
   background: var(--accent-blue);
 }
 
+.mode-button.exploration {
+  background: #4CAF50; /* Green for exploration */
+}
+
 .mode-button.artistic {
   background: var(--accent-orange);
 }

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Astronomical Accuracy Test</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #0f0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .test-section {
+            background: #001100;
+            border: 1px solid #0f0;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .planet-info {
+            background: #000033;
+            border-left: 3px solid #00f;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .pass { color: #0f0; }
+        .fail { color: #f00; }
+        .warning { color: #ff0; }
+        pre {
+            background: #111;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+        }
+        button {
+            background: #0f0;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px 5px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        button:hover {
+            background: #0a0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌌 Solar System Astronomical Accuracy Test</h1>
+        <p>Testing the accuracy of our astronomical calculations against known data.</p>
+        
+        <div class="test-section">
+            <h2>🧪 Test Controls</h2>
+            <button onclick="runQuickTest()">Quick Test</button>
+            <button onclick="runFullValidation()">Full Validation</button>
+            <button onclick="showCurrentPositions()">Current Positions</button>
+            <button onclick="clearResults()">Clear Results</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>📊 Test Results</h2>
+            <div id="results">
+                <p class="warning">Click a test button above to run astronomical validation.</p>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🌍 Current Planetary Information</h2>
+            <div id="planetary-info">
+                <p class="warning">Click "Current Positions" to see real-time planetary data.</p>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📈 Accuracy Metrics</h2>
+            <div id="accuracy-metrics">
+                <p>Metrics will appear after running tests.</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { runAstronomicalValidation, quickValidation, testCurrentDateCalculations } from './src/js/utils/AstronomicalValidation.js';
+        import { calculateAstronomicalInfo } from './src/js/utils/AstronomicalCalculations.js';
+        import { SOLAR_SYSTEM_DATA, getAllBodyNames } from './src/js/data/SolarSystemData.js';
+
+        // Make functions available globally
+        window.runQuickTest = function() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<h3>⚡ Quick Validation Results</h3>';
+            
+            try {
+                // Capture console output
+                const originalLog = console.log;
+                let output = '';
+                console.log = function(...args) {
+                    output += args.join(' ') + '\n';
+                    originalLog.apply(console, args);
+                };
+                
+                quickValidation();
+                
+                // Restore console.log
+                console.log = originalLog;
+                
+                resultsDiv.innerHTML += `<pre>${output}</pre>`;
+                resultsDiv.innerHTML += '<p class="pass">✅ Quick test completed successfully!</p>';
+            } catch (error) {
+                resultsDiv.innerHTML += `<p class="fail">❌ Error: ${error.message}</p>`;
+                console.error('Quick test error:', error);
+            }
+        };
+
+        window.runFullValidation = function() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<h3>🚀 Full Validation Results</h3>';
+            
+            try {
+                // Capture console output
+                const originalLog = console.log;
+                let output = '';
+                console.log = function(...args) {
+                    output += args.join(' ') + '\n';
+                    originalLog.apply(console, args);
+                };
+                
+                const results = runAstronomicalValidation();
+                
+                // Restore console.log
+                console.log = originalLog;
+                
+                resultsDiv.innerHTML += `<pre>${output}</pre>`;
+                
+                // Show accuracy metrics
+                const metricsDiv = document.getElementById('accuracy-metrics');
+                const passRate = (results.orbitalMechanics.passed / (results.orbitalMechanics.passed + results.orbitalMechanics.failed) * 100).toFixed(1);
+                metricsDiv.innerHTML = `
+                    <h4>📊 Accuracy Summary</h4>
+                    <p><strong>Pass Rate:</strong> ${passRate}%</p>
+                    <p><strong>Tests Passed:</strong> ${results.orbitalMechanics.passed}</p>
+                    <p><strong>Tests Failed:</strong> ${results.orbitalMechanics.failed}</p>
+                    <p><strong>Execution Time:</strong> ${results.duration}ms</p>
+                `;
+                
+            } catch (error) {
+                resultsDiv.innerHTML += `<p class="fail">❌ Error: ${error.message}</p>`;
+                console.error('Full validation error:', error);
+            }
+        };
+
+        window.showCurrentPositions = function() {
+            const infoDiv = document.getElementById('planetary-info');
+            infoDiv.innerHTML = '<h3>🌍 Current Planetary Positions</h3>';
+            
+            try {
+                const currentDate = new Date();
+                infoDiv.innerHTML += `<p><strong>Date:</strong> ${currentDate.toISOString()}</p>`;
+                
+                getAllBodyNames().forEach(bodyName => {
+                    if (bodyName === 'sun') return; // Skip sun
+                    
+                    const bodyData = SOLAR_SYSTEM_DATA[bodyName];
+                    if (!bodyData) return;
+                    
+                    const astroInfo = calculateAstronomicalInfo(bodyName, bodyData);
+                    
+                    infoDiv.innerHTML += `
+                        <div class="planet-info">
+                            <h4>${bodyName.toUpperCase()}</h4>
+                            <p><strong>Distance from Sun:</strong> ${astroInfo.distanceFromSun.toFixed(4)} AU</p>
+                            <p><strong>Mean Anomaly:</strong> ${astroInfo.meanAnomaly.toFixed(2)}°</p>
+                            <p><strong>True Anomaly:</strong> ${astroInfo.trueAnomaly.toFixed(2)}°</p>
+                            <p><strong>Orbital Velocity:</strong> ${astroInfo.orbitalVelocity.toFixed(2)} km/s</p>
+                            <p><strong>Position:</strong> (${astroInfo.position.x.toFixed(3)}, ${astroInfo.position.y.toFixed(3)}, ${astroInfo.position.z.toFixed(3)}) AU</p>
+                        </div>
+                    `;
+                });
+                
+            } catch (error) {
+                infoDiv.innerHTML += `<p class="fail">❌ Error: ${error.message}</p>`;
+                console.error('Current positions error:', error);
+            }
+        };
+
+        window.clearResults = function() {
+            document.getElementById('results').innerHTML = '<p class="warning">Results cleared. Run a test to see new results.</p>';
+            document.getElementById('planetary-info').innerHTML = '<p class="warning">Click "Current Positions" to see real-time planetary data.</p>';
+            document.getElementById('accuracy-metrics').innerHTML = '<p>Metrics will appear after running tests.</p>';
+        };
+
+        // Auto-run quick test on page load
+        setTimeout(() => {
+            console.log('🌌 Astronomical Test Page Loaded');
+            console.log('Ready to test astronomical accuracy!');
+        }, 1000);
+    </script>
+</body>
+</html>

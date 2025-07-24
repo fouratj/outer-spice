@@ -11,6 +11,7 @@ export class UIManager {
     this.modeToggle = null;
     this.speedSlider = null;
     this.speedValue = null;
+    this.orbitLinesToggle = null;
     this.planetButtons = null;
     this.helpToggle = null;
     this.helpPanel = null;
@@ -19,14 +20,18 @@ export class UIManager {
     this.targetInfo = null;
 
     // State
-    this.currentMode = 'realistic';
+    this.currentMode = 'exploration'; // Start with exploration mode
     this.isHelpVisible = false;
     this.selectedPlanet = null;
     this.debugMode = false;
 
+    // Mode cycle order
+    this.modeOrder = ['exploration', 'realistic', 'artistic'];
+
     // Bind methods
     this.onModeToggle = this.onModeToggle.bind(this);
     this.onSpeedChange = this.onSpeedChange.bind(this);
+    this.onOrbitLinesToggle = this.onOrbitLinesToggle.bind(this);
     this.onPlanetSelect = this.onPlanetSelect.bind(this);
     this.onHelpToggle = this.onHelpToggle.bind(this);
   }
@@ -53,6 +58,9 @@ export class UIManager {
     this.speedSlider = document.getElementById('speed-slider');
     this.speedValue = document.getElementById('speed-value');
 
+    // Orbit lines toggle
+    this.orbitLinesToggle = document.getElementById('orbit-lines-toggle');
+
     // Planet buttons
     this.planetButtons = document.querySelectorAll('.planet-button');
 
@@ -70,6 +78,7 @@ export class UIManager {
       this.modeToggle,
       this.speedSlider,
       this.speedValue,
+      this.orbitLinesToggle,
       this.helpToggle,
       this.helpPanel,
       this.infoPanel,
@@ -97,6 +106,11 @@ export class UIManager {
       this.speedSlider.addEventListener('input', this.onSpeedChange);
     }
 
+    // Orbit lines toggle
+    if (this.orbitLinesToggle) {
+      this.orbitLinesToggle.addEventListener('change', this.onOrbitLinesToggle);
+    }
+
     // Planet buttons
     this.planetButtons.forEach(button => {
       button.addEventListener('click', this.onPlanetSelect);
@@ -106,10 +120,13 @@ export class UIManager {
     if (this.helpToggle) {
       this.helpToggle.addEventListener('click', this.onHelpToggle);
     }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', this.onKeyDown.bind(this));
   }
 
   /**
-   * Handle mode toggle
+   * Handle mode toggle - cycles through exploration -> realistic -> artistic
    */
   async onModeToggle() {
     // Check if traveling - don't allow mode switch during travel
@@ -120,8 +137,10 @@ export class UIManager {
       return;
     }
 
-    this.currentMode =
-      this.currentMode === 'realistic' ? 'artistic' : 'realistic';
+    // Cycle to next mode
+    const currentIndex = this.modeOrder.indexOf(this.currentMode);
+    const nextIndex = (currentIndex + 1) % this.modeOrder.length;
+    this.currentMode = this.modeOrder[nextIndex];
 
     // Show loading state
     if (this.modeToggle) {
@@ -135,6 +154,9 @@ export class UIManager {
 
       // Update UI
       this.updateModeToggle();
+
+      // Show mode-specific help
+      this.showModeHelp(this.currentMode);
 
       console.log(`🎨 Mode switched to: ${this.currentMode}`);
     } catch (error) {
@@ -163,6 +185,26 @@ export class UIManager {
     this.speedValue.textContent = `${speed.toFixed(1)}x`;
 
     console.log(`🚀 Speed changed to: ${speed}x`);
+  }
+
+  /**
+   * Handle orbit lines toggle
+   */
+  onOrbitLinesToggle() {
+    if (!this.orbitLinesToggle) return;
+
+    const isVisible = this.orbitLinesToggle.checked;
+
+    // Update scene manager
+    this.sceneManager.setOrbitLinesVisible(isVisible);
+
+    console.log(`🛸 Orbit lines ${isVisible ? 'enabled' : 'disabled'}`);
+
+    // Show notification
+    this.showNotification(
+      `Orbit lines ${isVisible ? 'enabled' : 'disabled'}`,
+      'info'
+    );
   }
 
   /**
@@ -239,15 +281,129 @@ export class UIManager {
     const icon = this.modeToggle.querySelector('.mode-icon');
     const text = this.modeToggle.querySelector('.mode-text');
 
-    if (this.currentMode === 'realistic') {
-      this.modeToggle.className = 'mode-button realistic';
-      if (icon) icon.textContent = '🔬';
-      if (text) text.textContent = 'Realistic';
-    } else {
-      this.modeToggle.className = 'mode-button artistic';
-      if (icon) icon.textContent = '🎨';
-      if (text) text.textContent = 'Artistic';
+    switch (this.currentMode) {
+      case 'realistic':
+        this.modeToggle.className = 'mode-button realistic';
+        if (icon) icon.textContent = '🔭';
+        if (text) text.textContent = 'Realistic';
+        break;
+      case 'exploration':
+        this.modeToggle.className = 'mode-button exploration';
+        if (icon) icon.textContent = '🚀';
+        if (text) text.textContent = 'Exploration';
+        break;
+      case 'artistic':
+        this.modeToggle.className = 'mode-button artistic';
+        if (icon) icon.textContent = '🎨';
+        if (text) text.textContent = 'Artistic';
+        break;
     }
+  }
+
+  /**
+   * Show mode-specific help information
+   */
+  showModeHelp(mode) {
+    const helpMessages = {
+      realistic: '🔭 Realistic Mode: True astronomical distances. Distant planets may be invisible. Press T for telescope mode.',
+      exploration: '🚀 Exploration Mode: Balanced distances for navigation. Good for learning and travel.',
+      artistic: '🎨 Artistic Mode: Enhanced visuals and compressed distances for beautiful views.'
+    };
+
+    const message = helpMessages[mode];
+    if (message) {
+      this.showNotification(message, 'info', 4000);
+    }
+  }
+
+  /**
+   * Handle keyboard shortcuts
+   */
+  onKeyDown(event) {
+    // Ignore if typing in input fields
+    if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
+      return;
+    }
+
+    switch (event.key.toLowerCase()) {
+      case 't':
+        // Toggle telescope mode
+        event.preventDefault();
+        this.toggleTelescopeMode();
+        break;
+      case 'm':
+        // Toggle visualization mode
+        event.preventDefault();
+        this.onModeToggle();
+        break;
+      case 'o':
+        // Toggle orbit lines
+        event.preventDefault();
+        this.toggleOrbitLines();
+        break;
+      case '+':
+      case '=':
+        // Zoom in telescope
+        event.preventDefault();
+        this.telescopeZoomIn();
+        break;
+      case '-':
+        // Zoom out telescope
+        event.preventDefault();
+        this.telescopeZoomOut();
+        break;
+    }
+  }
+
+  /**
+   * Toggle telescope mode
+   */
+  toggleTelescopeMode() {
+    const telescopeSystem = this.sceneManager.getTelescopeSystem();
+    if (!telescopeSystem) {
+      this.showNotification('Telescope only available in realistic mode', 'warning');
+      return;
+    }
+
+    const isActive = this.sceneManager.toggleTelescopeMode();
+    const message = isActive ?
+      '🔭 Telescope activated. Use +/- to zoom, ESC to exit.' :
+      '🔭 Telescope deactivated.';
+
+    this.showNotification(message, 'info');
+  }
+
+  /**
+   * Zoom in telescope
+   */
+  telescopeZoomIn() {
+    const telescopeSystem = this.sceneManager.getTelescopeSystem();
+    if (telescopeSystem && telescopeSystem.isTelescopeMode) {
+      telescopeSystem.zoomIn();
+    }
+  }
+
+  /**
+   * Zoom out telescope
+   */
+  telescopeZoomOut() {
+    const telescopeSystem = this.sceneManager.getTelescopeSystem();
+    if (telescopeSystem && telescopeSystem.isTelescopeMode) {
+      telescopeSystem.zoomOut();
+    }
+  }
+
+  /**
+   * Toggle orbit lines visibility
+   */
+  toggleOrbitLines() {
+    if (!this.orbitLinesToggle) return;
+
+    // Toggle the checkbox state
+    this.orbitLinesToggle.checked = !this.orbitLinesToggle.checked;
+
+    // Trigger the change event
+    this.onOrbitLinesToggle();
   }
 
   /**

@@ -59,9 +59,9 @@
                 <!-- Mode Toggle -->
                 <div class="control-group">
                     <label>Visualization Mode</label>
-                    <button id="mode-toggle" class="mode-button realistic">
-                        <span class="mode-icon">🔬</span>
-                        <span class="mode-text">Realistic</span>
+                    <button id="mode-toggle" class="mode-button exploration">
+                        <span class="mode-icon">🚀</span>
+                        <span class="mode-text">Exploration</span>
                     </button>
                 </div>
 
@@ -69,6 +69,14 @@
                 <div class="control-group">
                     <label for="speed-slider">Travel Speed: <span id="speed-value">1.0x</span></label>
                     <input type="range" id="speed-slider" min="0.1" max="10" step="0.1" value="1" class="slider">
+                </div>
+
+                <!-- Orbit Lines Toggle -->
+                <div class="control-group">
+                    <label>
+                        <input type="checkbox" id="orbit-lines-toggle" checked>
+                        <span class="checkbox-label">Show Orbit Lines</span>
+                    </label>
                 </div>
 
                 <!-- Planet Selection -->
@@ -117,6 +125,10 @@
                         <div class="control-item">
                             <kbd>ESC</kbd>
                             <span>Release cursor lock</span>
+                        </div>
+                        <div class="control-item">
+                            <kbd>O</kbd>
+                            <span>Toggle orbit lines</span>
                         </div>
                     </div>
                 </div>

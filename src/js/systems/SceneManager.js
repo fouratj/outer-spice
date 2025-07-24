@@ -28,8 +28,14 @@ export class SceneManager {
     this.planetTravelSystem = null;
 
     // Settings
-    this.currentMode = 'realistic'; // 'realistic' or 'artistic'
+    this.currentMode = 'exploration'; // 'realistic', 'exploration', or 'artistic'
     this.timeScale = 1.0;
+
+    // Telescope system for realistic mode
+    this.telescopeSystem = null;
+
+    // Distant object indicators
+    this.distantObjectIndicators = null;
 
     // Performance
     this.renderTarget = null;
@@ -44,8 +50,20 @@ export class SceneManager {
     this.createRenderer();
     this.createLighting();
     await this.createStarField();
+    this.initializeIndicatorSystems();
 
     console.log('✅ SceneManager initialized');
+  }
+
+  /**
+   * Initialize indicator systems
+   */
+  async initializeIndicatorSystems() {
+    // Initialize distant object indicators
+    const { DistantObjectIndicators } = await import('./DistantObjectIndicators.js');
+    this.distantObjectIndicators = new DistantObjectIndicators(this.scene, this.camera, this.renderer);
+
+    console.log('✅ Indicator systems initialized');
   }
 
   /**
@@ -238,6 +256,9 @@ export class SceneManager {
     // Wait for all bodies to be created
     await Promise.all(loadPromises);
 
+    // Add orbit lines to the scene
+    this.addOrbitLinesToScene();
+
     console.log(`✅ Loaded ${this.celestialBodies.size} celestial bodies`);
   }
 
@@ -256,6 +277,20 @@ export class SceneManager {
     if (this.planetTravelSystem) {
       this.planetTravelSystem.update(deltaTime);
     }
+
+    // Update telescope system
+    if (this.telescopeSystem) {
+      this.telescopeSystem.updateTracking();
+    }
+
+    // Update distant object indicators
+    if (this.distantObjectIndicators) {
+      this.distantObjectIndicators.updateIndicators(this.celestialBodies, this.currentMode);
+      this.distantObjectIndicators.updatePositions();
+    }
+
+    // Update orbit lines performance optimization
+    this.updateOrbitLinesPerformance();
 
     // Subtle starfield rotation
     if (this.starField) {
@@ -286,37 +321,104 @@ export class SceneManager {
   }
 
   /**
-   * Switch between realistic and artistic modes
+   * Switch between realistic, exploration, and artistic modes
    */
   async setVisualizationMode(mode) {
     if (mode === this.currentMode) return;
 
+    const previousMode = this.currentMode;
     this.currentMode = mode;
 
-    // Update lighting
-    if (mode === 'realistic') {
-      this.ambientLight.intensity = 0.2;
-      this.sunLight.intensity = 2;
-      this.renderer.toneMappingExposure = 1.0;
-    } else {
-      this.ambientLight.intensity = 0.5;
-      this.sunLight.intensity = 1.5;
-      this.renderer.toneMappingExposure = 1.2;
+    // Update lighting based on mode
+    switch (mode) {
+      case 'realistic':
+        // True astronomical mode - minimal lighting
+        this.ambientLight.intensity = 0.1;
+        this.sunLight.intensity = 3.0;
+        this.renderer.toneMappingExposure = 0.8;
+
+        // Initialize telescope system if not already created
+        if (!this.telescopeSystem) {
+          const { TelescopeSystem } = await import('./TelescopeSystem.js');
+          this.telescopeSystem = new TelescopeSystem(this.camera, this.scene);
+        }
+        break;
+
+      case 'exploration':
+        // Balanced mode for navigation
+        this.ambientLight.intensity = 0.3;
+        this.sunLight.intensity = 2.0;
+        this.renderer.toneMappingExposure = 1.0;
+
+        // Disable telescope if active
+        if (this.telescopeSystem && this.telescopeSystem.isTelescopeMode) {
+          this.telescopeSystem.toggleTelescopeMode();
+        }
+        break;
+
+      case 'artistic':
+        // Enhanced visuals for beauty
+        this.ambientLight.intensity = 0.5;
+        this.sunLight.intensity = 1.5;
+        this.renderer.toneMappingExposure = 1.2;
+
+        // Disable telescope if active
+        if (this.telescopeSystem && this.telescopeSystem.isTelescopeMode) {
+          this.telescopeSystem.toggleTelescopeMode();
+        }
+        break;
+
+      default:
+        console.warn(`Unknown visualization mode: ${mode}`);
+        this.currentMode = previousMode;
+        return;
     }
 
-    // Reload solar system with new scaling for artistic mode
-    console.log(`🎨 Switching to ${mode} mode - reloading solar system...`);
+    // Reload solar system with new scaling
+    console.log(`🎨 Switching from ${previousMode} to ${mode} mode - reloading solar system...`);
     await this.reloadSolarSystem();
 
+    // Update celestial body modes
+    this.celestialBodies.forEach((body) => {
+      if (body.setMode) {
+        body.setMode(mode);
+      }
+    });
+
+    // Optimize orbit lines based on mode
+    this.optimizeOrbitLinesForMode(mode);
+
     console.log(`🎨 Switched to ${mode} mode`);
+
+    // Show mode-specific notifications
+    this.showModeNotification(mode);
+  }
+
+  /**
+   * Show notification about current mode capabilities
+   */
+  showModeNotification(mode) {
+    const notifications = {
+      realistic: '🔭 Realistic Mode: True astronomical distances. Use telescope (T) to view distant planets.',
+      exploration: '🚀 Exploration Mode: Balanced distances for navigation and learning.',
+      artistic: '🎨 Artistic Mode: Enhanced visuals and compressed distances for beauty.'
+    };
+
+    console.log(notifications[mode] || '');
   }
 
   /**
    * Reload the solar system (useful when switching modes)
    */
   async reloadSolarSystem() {
-    // Dispose of existing bodies
+    // Dispose of existing bodies and their orbit lines
     this.celestialBodies.forEach((body) => {
+      // Remove orbit line from scene
+      const orbitLine = body.getOrbitLine();
+      if (orbitLine && orbitLine.getObject3D()) {
+        this.scene.remove(orbitLine.getObject3D());
+      }
+
       if (body.dispose) {
         body.dispose();
       }
@@ -343,10 +445,158 @@ export class SceneManager {
   }
 
   /**
+   * Add orbit lines to the scene
+   */
+  addOrbitLinesToScene() {
+    this.celestialBodies.forEach((body) => {
+      const orbitLine = body.getOrbitLine();
+      if (orbitLine && orbitLine.getObject3D()) {
+        this.scene.add(orbitLine.getObject3D());
+        console.log(`🛸 Added orbit line for ${body.name} to scene`);
+      }
+    });
+  }
+
+  /**
+   * Toggle orbit line visibility for all celestial bodies
+   */
+  toggleOrbitLines() {
+    let anyVisible = false;
+
+    // Check if any orbit lines are currently visible
+    this.celestialBodies.forEach((body) => {
+      if (body.isOrbitLineVisible()) {
+        anyVisible = true;
+      }
+    });
+
+    // Toggle all orbit lines to the opposite state
+    const newVisibility = !anyVisible;
+    this.setOrbitLinesVisible(newVisibility);
+
+    console.log(`🛸 ${newVisibility ? 'Enabled' : 'Disabled'} orbit lines`);
+    return newVisibility;
+  }
+
+  /**
+   * Set orbit line visibility for all celestial bodies
+   */
+  setOrbitLinesVisible(visible) {
+    this.celestialBodies.forEach((body) => {
+      body.setOrbitLineVisible(visible);
+    });
+  }
+
+  /**
+   * Get orbit line visibility status
+   */
+  areOrbitLinesVisible() {
+    let anyVisible = false;
+    this.celestialBodies.forEach((body) => {
+      if (body.isOrbitLineVisible()) {
+        anyVisible = true;
+      }
+    });
+    return anyVisible;
+  }
+
+  /**
+   * Update orbit lines performance based on camera position
+   */
+  updateOrbitLinesPerformance() {
+    if (!this.camera) return;
+
+    const cameraPosition = this.camera.position;
+
+    // Update each orbit line's level of detail based on camera distance
+    this.celestialBodies.forEach((body) => {
+      const orbitLine = body.getOrbitLine();
+      if (orbitLine && orbitLine.isOrbitVisible()) {
+        orbitLine.updateLevelOfDetail(cameraPosition);
+      }
+    });
+  }
+
+  /**
+   * Optimize orbit lines for performance mode
+   */
+  optimizeOrbitLinesForPerformance() {
+    this.celestialBodies.forEach((body) => {
+      const orbitLine = body.getOrbitLine();
+      if (orbitLine) {
+        orbitLine.optimizeForPerformance();
+      }
+    });
+    console.log('🚀 Optimized orbit lines for performance');
+  }
+
+  /**
+   * Enable high-quality orbit line rendering
+   */
+  enableHighQualityOrbitLines() {
+    this.celestialBodies.forEach((body) => {
+      const orbitLine = body.getOrbitLine();
+      if (orbitLine) {
+        orbitLine.enableHighQuality();
+      }
+    });
+    console.log('✨ Enabled high-quality orbit line rendering');
+  }
+
+  /**
+   * Optimize orbit lines based on visualization mode
+   */
+  optimizeOrbitLinesForMode(mode) {
+    switch (mode) {
+      case 'realistic':
+        // Optimize for performance in realistic mode due to large distances
+        this.optimizeOrbitLinesForPerformance();
+        break;
+      case 'exploration':
+        // Balanced quality for exploration mode
+        this.celestialBodies.forEach((body) => {
+          const orbitLine = body.getOrbitLine();
+          if (orbitLine) {
+            orbitLine.setLevelOfDetail('medium');
+          }
+        });
+        break;
+      case 'artistic':
+        // High quality for artistic mode
+        this.enableHighQualityOrbitLines();
+        break;
+    }
+  }
+
+  /**
    * Get planet travel system
    */
   getPlanetTravelSystem() {
     return this.planetTravelSystem;
+  }
+
+  /**
+   * Get telescope system
+   */
+  getTelescopeSystem() {
+    return this.telescopeSystem;
+  }
+
+  /**
+   * Toggle telescope mode (only available in realistic mode)
+   */
+  toggleTelescopeMode() {
+    if (this.currentMode !== 'realistic') {
+      console.warn('🔭 Telescope mode only available in realistic mode');
+      return false;
+    }
+
+    if (!this.telescopeSystem) {
+      console.warn('🔭 Telescope system not initialized');
+      return false;
+    }
+
+    return this.telescopeSystem.toggleTelescopeMode();
   }
 
   /**

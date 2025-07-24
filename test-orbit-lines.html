@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orbit Lines Validation Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #2a2a2a;
+            border-radius: 8px;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .test-pass {
+            background-color: #2d5a2d;
+            border-left: 4px solid #4caf50;
+        }
+        .test-fail {
+            background-color: #5a2d2d;
+            border-left: 4px solid #f44336;
+        }
+        .test-info {
+            background-color: #2d4a5a;
+            border-left: 4px solid #2196f3;
+        }
+        .orbit-data {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .planet-orbit {
+            background-color: #333;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .planet-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #4caf50;
+        }
+        .orbit-param {
+            margin: 5px 0;
+            font-family: monospace;
+        }
+        button {
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #test-output {
+            background-color: #1e1e1e;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🛸 Orbit Lines Validation Test</h1>
+        <p>This test validates the mathematical accuracy of orbital path calculations.</p>
+
+        <div class="test-section">
+            <h2>Test Controls</h2>
+            <button onclick="runOrbitAccuracyTest()">Run Orbit Accuracy Test</button>
+            <button onclick="runEccentricityTest()">Test Eccentricity Calculations</button>
+            <button onclick="runInclinationTest()">Test Inclination Calculations</button>
+            <button onclick="runPerformanceTest()">Run Performance Test</button>
+            <button onclick="clearOutput()">Clear Output</button>
+        </div>
+
+        <div class="test-section">
+            <h2>Test Output</h2>
+            <div id="test-output"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>Expected Orbital Parameters</h2>
+            <div class="orbit-data" id="orbit-data"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { OrbitLine } from '/src/js/models/OrbitLine.js';
+        import { SOLAR_SYSTEM_DATA } from '/src/js/data/SolarSystemData.js';
+        import { calculateOrbitalPosition, transformToEcliptic } from '/src/js/utils/AstronomicalCalculations.js';
+
+        // Make functions globally available
+        window.OrbitLine = OrbitLine;
+        window.SOLAR_SYSTEM_DATA = SOLAR_SYSTEM_DATA;
+        window.calculateOrbitalPosition = calculateOrbitalPosition;
+        window.transformToEcliptic = transformToEcliptic;
+
+        // Test output functions
+        window.log = function(message, type = 'info') {
+            const output = document.getElementById('test-output');
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : type === 'warning' ? '⚠️' : 'ℹ️';
+            output.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+            output.scrollTop = output.scrollHeight;
+        };
+
+        window.clearOutput = function() {
+            document.getElementById('test-output').textContent = '';
+        };
+
+        // Display orbital parameters
+        function displayOrbitParameters() {
+            const container = document.getElementById('orbit-data');
+            container.innerHTML = '';
+
+            Object.entries(SOLAR_SYSTEM_DATA).forEach(([name, data]) => {
+                if (name === 'sun') return; // Skip sun
+
+                const planetDiv = document.createElement('div');
+                planetDiv.className = 'planet-orbit';
+                planetDiv.innerHTML = `
+                    <div class="planet-name">${name.toUpperCase()}</div>
+                    <div class="orbit-param">Semi-major axis: ${data.semiMajorAxis} AU</div>
+                    <div class="orbit-param">Eccentricity: ${data.eccentricity.toFixed(6)}</div>
+                    <div class="orbit-param">Inclination: ${data.inclination.toFixed(3)}°</div>
+                    <div class="orbit-param">Orbital period: ${data.orbitalPeriod.toFixed(1)} days</div>
+                    <div class="orbit-param">Longitude of perihelion: ${data.longitudeOfPerihelion.toFixed(3)}°</div>
+                    <div class="orbit-param">Longitude of ascending node: ${data.longitudeOfAscendingNode.toFixed(3)}°</div>
+                `;
+                container.appendChild(planetDiv);
+            });
+        }
+
+        // Test functions
+        window.runOrbitAccuracyTest = function() {
+            log('Starting orbit accuracy test...', 'info');
+            
+            let passCount = 0;
+            let totalTests = 0;
+
+            Object.entries(SOLAR_SYSTEM_DATA).forEach(([name, data]) => {
+                if (name === 'sun') return;
+
+                totalTests++;
+                log(`Testing ${name}...`);
+
+                try {
+                    // Create orbit line
+                    const orbitLine = new OrbitLine(name, data, { scaleFactor: 1.0 });
+                    orbitLine.create();
+
+                    if (!orbitLine.getObject3D()) {
+                        log(`❌ ${name}: Failed to create orbit line`, 'error');
+                        return;
+                    }
+
+                    // Test orbit points calculation
+                    const orbitPoints = orbitLine.calculateOrbitPoints();
+                    
+                    if (orbitPoints.length === 0) {
+                        log(`❌ ${name}: No orbit points calculated`, 'error');
+                        return;
+                    }
+
+                    // Validate orbit shape (check if it's roughly elliptical)
+                    const distances = orbitPoints.map(p => Math.sqrt(p.x * p.x + p.y * p.y + p.z * p.z));
+                    const minDistance = Math.min(...distances);
+                    const maxDistance = Math.max(...distances);
+                    
+                    // Calculate expected perihelion and aphelion
+                    const expectedPerihelion = data.semiMajorAxis * (1 - data.eccentricity);
+                    const expectedAphelion = data.semiMajorAxis * (1 + data.eccentricity);
+                    
+                    const perihelionError = Math.abs(minDistance - expectedPerihelion) / expectedPerihelion;
+                    const aphelionError = Math.abs(maxDistance - expectedAphelion) / expectedAphelion;
+                    
+                    if (perihelionError < 0.01 && aphelionError < 0.01) { // 1% tolerance
+                        log(`✅ ${name}: Orbit shape accurate (perihelion: ${minDistance.toFixed(3)} AU, aphelion: ${maxDistance.toFixed(3)} AU)`, 'success');
+                        passCount++;
+                    } else {
+                        log(`❌ ${name}: Orbit shape inaccurate (perihelion error: ${(perihelionError * 100).toFixed(2)}%, aphelion error: ${(aphelionError * 100).toFixed(2)}%)`, 'error');
+                    }
+
+                    // Clean up
+                    orbitLine.dispose();
+
+                } catch (error) {
+                    log(`❌ ${name}: Error during test - ${error.message}`, 'error');
+                }
+            });
+
+            log(`\nOrbit accuracy test completed: ${passCount}/${totalTests} tests passed`, passCount === totalTests ? 'success' : 'warning');
+        };
+
+        window.runEccentricityTest = function() {
+            log('Testing eccentricity calculations...', 'info');
+
+            // Test planets with known high eccentricity
+            const testCases = [
+                { name: 'mercury', expectedEccentricity: 0.205630 },
+                { name: 'mars', expectedEccentricity: 0.093413 },
+                { name: 'earth', expectedEccentricity: 0.016710 }
+            ];
+
+            testCases.forEach(testCase => {
+                const data = SOLAR_SYSTEM_DATA[testCase.name];
+                if (!data) return;
+
+                const error = Math.abs(data.eccentricity - testCase.expectedEccentricity);
+                const tolerance = 0.001; // 0.1% tolerance
+
+                if (error < tolerance) {
+                    log(`✅ ${testCase.name}: Eccentricity accurate (${data.eccentricity.toFixed(6)})`, 'success');
+                } else {
+                    log(`❌ ${testCase.name}: Eccentricity error ${error.toFixed(6)} (expected: ${testCase.expectedEccentricity}, got: ${data.eccentricity})`, 'error');
+                }
+            });
+        };
+
+        window.runInclinationTest = function() {
+            log('Testing inclination calculations...', 'info');
+
+            // Test orbital plane calculations
+            Object.entries(SOLAR_SYSTEM_DATA).forEach(([name, data]) => {
+                if (name === 'sun') return;
+
+                try {
+                    // Calculate a point on the orbit
+                    const orbitalPos = calculateOrbitalPosition(data);
+                    const eclipticPos = transformToEcliptic(orbitalPos, data);
+
+                    // For non-zero inclination, Z component should be non-zero
+                    if (data.inclination > 0.1) {
+                        if (Math.abs(eclipticPos.z) > 0.001) {
+                            log(`✅ ${name}: Inclination properly applied (z: ${eclipticPos.z.toFixed(6)})`, 'success');
+                        } else {
+                            log(`❌ ${name}: Inclination not properly applied`, 'error');
+                        }
+                    } else {
+                        log(`ℹ️ ${name}: Low inclination (${data.inclination.toFixed(3)}°), skipping z-test`);
+                    }
+                } catch (error) {
+                    log(`❌ ${name}: Error testing inclination - ${error.message}`, 'error');
+                }
+            });
+        };
+
+        window.runPerformanceTest = function() {
+            log('Running performance test...', 'info');
+
+            const startTime = performance.now();
+            let orbitLines = [];
+
+            try {
+                // Create orbit lines for all planets
+                Object.entries(SOLAR_SYSTEM_DATA).forEach(([name, data]) => {
+                    if (name === 'sun') return;
+
+                    const orbitLine = new OrbitLine(name, data, { 
+                        scaleFactor: 1.0,
+                        segments: 256 
+                    });
+                    orbitLine.create();
+                    orbitLines.push(orbitLine);
+                });
+
+                const creationTime = performance.now() - startTime;
+                log(`✅ Created ${orbitLines.length} orbit lines in ${creationTime.toFixed(2)}ms`, 'success');
+
+                // Test level of detail changes
+                const lodStartTime = performance.now();
+                orbitLines.forEach(orbitLine => {
+                    orbitLine.setLevelOfDetail('low');
+                    orbitLine.setLevelOfDetail('high');
+                });
+                const lodTime = performance.now() - lodStartTime;
+                log(`✅ LOD changes completed in ${lodTime.toFixed(2)}ms`, 'success');
+
+                // Clean up
+                orbitLines.forEach(orbitLine => orbitLine.dispose());
+                log(`✅ Performance test completed successfully`, 'success');
+
+            } catch (error) {
+                log(`❌ Performance test failed: ${error.message}`, 'error');
+                orbitLines.forEach(orbitLine => orbitLine.dispose());
+            }
+        };
+
+        // Initialize display
+        displayOrbitParameters();
+        log('Orbit Lines Validation Test initialized', 'success');
+        log('Click the test buttons above to run validation tests', 'info');
+    </script>
+</body>
+</html>
